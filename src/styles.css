@@ -190,6 +190,18 @@
   /* « Auto » porte un mot, les autres un chiffre : on lui laisse sa place */
   .cfg-choice[data-cols="auto"] { flex: 1.6; }
   .cfg-choice[data-theme] { padding: 7px 4px; font-size: 12px; }
+  .cfg-action { font-size: 12px; padding: 7px 4px; }
+
+  /* Compte rendu de l'export ou de l'import, effacé après quelques secondes */
+  .cfg-note {
+    font-size: 11px;
+    line-height: 1.35;
+    color: var(--ink-dim);
+    text-align: center;
+    margin-top: 7px;
+  }
+  .cfg-note:empty { display: none; }
+  .cfg-note.erreur { color: var(--red-soft); }
 
   /* Pied de popup sur une seule ligne : version et commit côte à côte */
   .cfg-meta {

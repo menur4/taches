@@ -33,29 +33,43 @@ function systemTheme() {
 }
 document.documentElement.dataset.theme = systemTheme();
 
-// ---------- Persistance ----------
+/* ---------- Persistance ----------
+   Deux dépôts possibles. Le dépôt de l'hôte n'existe que si la page est
+   hébergée ; ouverte en local, elle doit tout de même retenir le travail,
+   d'où le repli sur localStorage. On tente le premier, on retombe sur le
+   second dès qu'il manque ou qu'il échoue — les deux peuvent lever
+   (navigation privée, quota), aucun appel n'est donc laissé nu. */
+const store = {
+  async get(key) {
+    if (window.storage && window.storage.get) {
+      try {
+        const res = await window.storage.get(key);
+        if (res && res.value != null) return res.value;
+      } catch (e) { /* dépôt hôte indisponible */ }
+    }
+    try { return localStorage.getItem(key); } catch (e) { return null; }
+  },
+  async set(key, value) {
+    if (window.storage && window.storage.set) {
+      try { await window.storage.set(key, value); return true; } catch (e) { /* repli */ }
+    }
+    try { localStorage.setItem(key, value); return true; }
+    catch (e) { console.error('Aucun stockage disponible', e); return false; }
+  },
+};
+
 async function load() {
-  try {
-    const res = await window.storage.get(STORAGE_KEY);
-    tiles = JSON.parse(res.value);
-  } catch (e) {
+  let brut = null;
+  try { brut = JSON.parse(await store.get(STORAGE_KEY)); } catch (e) { /* rien de lisible */ }
+  tiles = normaliseTiles(brut);
+  if (!tiles.length) {
     tiles = DEFAULT_TILES;
     saveTiles();
   }
-  tiles.forEach(t => {
-    if (!Array.isArray(t.todos)) t.todos = [];
-    if (!Array.isArray(t.tags)) t.tags = [];
-    if (t.parentId === undefined) t.parentId = null;
-  });
-  // Purge des rattachements orphelins (carte mère supprimée)
-  tiles.forEach(t => {
-    if (t.parentId && !tiles.some(x => x.id === t.parentId)) t.parentId = null;
-  });
   recomputeDerived();
 
   try {
-    const res = await window.storage.get(PREFS_KEY);
-    const saved = JSON.parse(res.value);
+    const saved = JSON.parse(await store.get(PREFS_KEY));
     // Validation explicite : JSON.parse('null') rend null sans lever,
     // et une valeur hors liste casserait le sélecteur
     if (saved && COLS_CHOICES.includes(String(saved.cols))) prefs.cols = String(saved.cols);
@@ -73,8 +87,7 @@ let prefsTimer = null;
 function savePrefs() {
   clearTimeout(prefsTimer);
   prefsTimer = setTimeout(async () => {
-    try { await window.storage.set(PREFS_KEY, JSON.stringify(prefs)); }
-    catch (e) { console.error('Sauvegarde des réglages impossible', e); }
+    store.set(PREFS_KEY, JSON.stringify(prefs));
   }, 400);
 }
 
@@ -105,9 +118,44 @@ let tilesTimer = null;
 function saveTiles() {
   clearTimeout(tilesTimer);
   tilesTimer = setTimeout(async () => {
-    try { await window.storage.set(STORAGE_KEY, JSON.stringify(tiles)); }
-    catch (e) { console.error('Sauvegarde impossible', e); }
+    store.set(STORAGE_KEY, JSON.stringify(tiles));
   }, 400);
+}
+
+/* Remet une liste venue du stockage ou d'un fichier importé dans un état
+   sûr : types corrigés, pourcentages bornés, rattachements orphelins
+   coupés. Une carte sans identifiant est écartée plutôt que devinée. */
+function normaliseTiles(brut) {
+  if (!Array.isArray(brut)) return [];
+  const vus = new Set();
+  const liste = brut
+    .filter(t => t && typeof t === 'object' && t.id != null)
+    .map(t => {
+      const id = String(t.id);
+      if (vus.has(id)) return null;          // identifiant déjà pris
+      vus.add(id);
+      const pct = Number(t.pct);
+      return {
+        id,
+        title: typeof t.title === 'string' ? t.title : 'Sans titre',
+        tags: Array.isArray(t.tags) ? t.tags.filter(x => typeof x === 'string') : [],
+        pct: Number.isFinite(pct) ? Math.max(0, Math.min(100, Math.round(pct))) : 0,
+        parentId: t.parentId == null ? null : String(t.parentId),
+        todos: Array.isArray(t.todos)
+          ? t.todos.filter(td => td && td.id != null).map(td => ({
+              id: String(td.id),
+              text: typeof td.text === 'string' ? td.text : '',
+              done: !!td.done,
+            }))
+          : [],
+      };
+    })
+    .filter(Boolean);
+  // un parent absent laisserait une carte hors de toute hiérarchie
+  liste.forEach(t => {
+    if (t.parentId && !liste.some(x => x.id === t.parentId)) t.parentId = null;
+  });
+  return liste;
 }
 
 // ---------- Tags & couleurs ----------
@@ -855,6 +903,71 @@ function clearConfirming() {
   document.querySelectorAll('.card.confirming')
     .forEach(c => c.classList.remove('confirming'));
 }
+
+/* ---------- Export / import ----------
+   Le fichier porte un en-tête (format, date) plutôt que le tableau nu :
+   un import saura ainsi reconnaître ce qu'on lui donne, et les deux
+   formes restent acceptées à la relecture. */
+const EXPORT_FORMAT = 'taches/v1';
+
+function noteCfg(texte, erreur) {
+  const el = document.getElementById('cfgNote');
+  el.textContent = texte;
+  el.classList.toggle('erreur', !!erreur);
+  clearTimeout(noteCfg.timer);
+  noteCfg.timer = setTimeout(() => { el.textContent = ''; }, 6000);
+}
+
+document.getElementById('btnExport').addEventListener('click', () => {
+  const contenu = JSON.stringify(
+    { format: EXPORT_FORMAT, exporte: new Date().toISOString(), tiles }, null, 2);
+  const url = URL.createObjectURL(new Blob([contenu], { type: 'application/json' }));
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `taches-${new Date().toISOString().slice(0, 10)}.json`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  // le révoquer aussitôt annulerait le téléchargement en cours
+  setTimeout(() => URL.revokeObjectURL(url), 10000);
+  const n = tiles.length;
+  noteCfg(`${n} carte${n > 1 ? 's' : ''} exportée${n > 1 ? 's' : ''}.`);
+});
+
+const fileImport = document.getElementById('fileImport');
+document.getElementById('btnImport').addEventListener('click', () => {
+  fileImport.value = '';        // sans quoi réimporter le même fichier ne déclenche rien
+  fileImport.click();
+});
+
+fileImport.addEventListener('change', () => {
+  const fichier = fileImport.files && fileImport.files[0];
+  if (!fichier) return;
+  const lecteur = new FileReader();
+  lecteur.onerror = () => noteCfg('Fichier illisible.', true);
+  lecteur.onload = () => {
+    let donnees;
+    try { donnees = JSON.parse(lecteur.result); }
+    catch (e) { noteCfg('Ce fichier n\'est pas du JSON valide.', true); return; }
+    // on accepte l'enveloppe comme le tableau nu
+    const liste = normaliseTiles(Array.isArray(donnees) ? donnees : donnees && donnees.tiles);
+    if (!liste.length) {
+      noteCfg('Aucune carte exploitable dans ce fichier.', true);
+      return;
+    }
+    const n = liste.length;
+    if (!confirm(`Remplacer les ${tiles.length} carte(s) actuelles par les ${n} carte(s) `
+               + `du fichier ? Cette action ne peut pas être annulée.`)) return;
+    tiles = liste;
+    flipped.clear();
+    activeFilters.clear();
+    recomputeDerived();
+    saveTiles();
+    render();
+    noteCfg(`${n} carte${n > 1 ? 's' : ''} importée${n > 1 ? 's' : ''}.`);
+  };
+  lecteur.readAsText(fichier);
+});
 
 const cfgToggle = document.getElementById('cfgToggle');
 const cfgPanel = document.getElementById('cfgPanel');

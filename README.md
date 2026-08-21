@@ -31,6 +31,11 @@ fichier que l'on ouvre, que l'on envoie par mail ou que l'on publie tel quel.
   déplie depuis l'entonnoir, sans décaler la grille. Un compteur signale les
   filtres actifs même une fois le panneau replié.
 - **Densité de grille** réglable : automatique, ou 2 à 5 colonnes.
+- **Export et import.** Le panneau de réglages écrit un fichier JSON de toutes
+  les cartes, et sait le relire pour les restaurer ailleurs ou revenir en
+  arrière. À la relecture, chaque carte est vérifiée et corrigée — types,
+  pourcentages hors bornes, rattachements vers une carte absente — plutôt que
+  reprise telle quelle.
 - **Thème clair, sombre ou système.** « Système » suit le réglage du navigateur
   et réagit s'il change en cours de session.
 - **Page monochrome**, à deux exceptions près : le doré d'une jauge pleine et
@@ -56,10 +61,12 @@ open dist/tasks.html
 `build.sh` recompose les sources en un fichier unique et y injecte la version,
 le hash du commit et l'URL du dépôt, lisibles dans le panneau de réglages.
 
-> **Persistance.** Les données sont écrites via `window.storage`, une API
-> propre à l'environnement d'hébergement de la page. Ouverte en local par un
-> simple double-clic, la page fonctionne mais **ne conserve rien** d'une visite
-> à l'autre : les cartes de démonstration réapparaissent à chaque chargement.
+> **Persistance.** Le travail est conservé d'une visite à l'autre, y compris
+> en ouverture locale : la page écrit dans le dépôt de son hôte quand elle est
+> hébergée, et retombe sur `localStorage` sinon. Les données restent donc
+> attachées au navigateur — un autre poste, un autre navigateur ou une fenêtre
+> privée repartent des cartes de démonstration. Pour les déplacer, passez par
+> l'export.
 
 ## Organisation des fichiers
 
