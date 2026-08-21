@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+# Reconstruit dist/ juste après chaque commit.
+#
+# Sans cela, l'ordre naturel (build puis commit) fige dans la page le hash
+# du commit PRÉCÉDENT : le fichier publié annonce alors un état du dépôt
+# qui n'est pas le sien. Ici HEAD est déjà le nouveau commit et l'arbre
+# est propre, donc le hash injecté est juste et sans astérisque.
+#
+# À activer une fois par clone :  git config core.hooksPath .githooks
+set -euo pipefail
+racine=$(git rev-parse --show-toplevel)
+"$racine/build.sh" >/dev/null
+printf 'dist/tasks.html reconstruit sur %s\n' "$(git rev-parse --short HEAD)"

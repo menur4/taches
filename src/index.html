@@ -67,13 +67,15 @@
         <button class="cfg-choice" data-theme="system" role="radio" aria-checked="true">Système</button>
       </div>
 
-      <!-- Version et commit sont figés par build.sh au moment de la
-           construction : la page publiée dit donc de quel état du dépôt
-           elle provient, sans rien avoir à interroger à l'exécution. -->
-      <div class="cfg-meta">
-        <div class="cfg-version">v__VERSION__</div>
-        <div class="cfg-commit" title="Commit de construction">__COMMIT__</div>
-      </div>
+      <!-- Version, commit et URL du dépôt sont figés par build.sh : la page
+           publiée dit de quel état du dépôt elle provient, sans rien avoir
+           à interroger à l'exécution. Sans remote, l'URL est vide et le CSS
+           neutralise le lien. -->
+      <a class="cfg-meta" href="__REPO_URL__" target="_blank" rel="noopener noreferrer"
+         title="Voir le dépôt sur GitHub">
+        <span class="cfg-version">v__VERSION__</span>
+        <span class="cfg-commit">__COMMIT__</span>
+      </a>
     </div>
   </div>
 </header>
