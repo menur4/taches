@@ -709,16 +709,15 @@
     align-items: center;
     min-height: 20px;
   }
+  /* Le titre du verso est un champ, comme au recto : une faute se corrige
+     donc sans retourner la carte. Il perd le repli sur deux lignes, qu'un
+     input ne sait pas faire, et se comporte comme son jumeau. */
   .back-title {
-    font-weight: 600;
     font-size: 14px;
     line-height: 1.3;
     flex: 1;
-    overflow: hidden;
+    min-width: 0;
     text-overflow: ellipsis;
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
   }
 
   .todo-list {

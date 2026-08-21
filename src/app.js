@@ -447,7 +447,7 @@ function renderGrid() {
         </div>
         <div class="face back">
           <div class="back-head">
-            <div class="back-title">${escapeHtml(t.title)}</div>
+            <input class="tile-title back-title" value="${escapeHtml(t.title)}" aria-label="${tr('titreCarte')}">
           </div>
           <div class="tag-row">
             ${tagsHTML}
@@ -782,15 +782,20 @@ function bindEvents() {
     });
   });
 
-  // Titre
+  // Titre : le même champ existe sur les deux faces, l'un recopie l'autre
   grid.querySelectorAll('.tile-title').forEach(inp => {
-    inp.addEventListener('change', e => {
+    const propage = e => {
       const t = getTile(e.target);
       if (!t) return;
       t.title = e.target.value;
-      e.target.closest('.card').querySelector('.back-title').textContent = e.target.value;
-      saveTiles();
-    });
+      e.target.closest('.card').querySelectorAll('.tile-title').forEach(autre => {
+        if (autre !== e.target) autre.value = e.target.value;
+      });
+    };
+    // input plutôt que change seul : la face opposée suit la frappe, sinon
+    // retourner la carte sans avoir quitté le champ montrerait l'ancien titre
+    inp.addEventListener('input', propage);
+    inp.addEventListener('change', e => { propage(e); saveTiles(); });
     inp.addEventListener('keydown', e => { if (e.key === 'Enter') e.target.blur(); });
   });
 
