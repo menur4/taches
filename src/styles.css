@@ -144,7 +144,7 @@
   .cfg-popover {
     position: absolute;
     top: calc(100% + 8px);
-    right: 0;
+    inset-inline-end: 0;
     z-index: 20;
     background: var(--panel);
     border: 1px solid var(--panel-edge);
@@ -363,7 +363,7 @@
   /* Poignée de déplacement : coin bas droit, révélée au survol de la carte */
   .drag-handle {
     position: absolute;
-    right: 8px;
+    inset-inline-end: 8px;
     bottom: 8px;
     width: 26px;
     height: 26px;
@@ -510,7 +510,7 @@
     color: var(--ink-faint); cursor: pointer;
     font-size: 12px; padding: 1px 5px;
     border-radius: 4px;
-    margin-left: auto;
+    margin-inline-start: auto;
   }
   .parent-info button:hover { color: var(--red-soft); }
 
@@ -866,6 +866,29 @@
   .add-ring::before { width: 36%; height: 2px; transform: translate(-50%, -50%); }
   .add-ring::after  { width: 2px; height: 36%; transform: translate(-50%, -50%); }
 
+  /* Larken ne dessine pas l'arabe : on lui adjoint des fontes qui le
+     couvrent. Le repli se fait glyphe par glyphe, les chiffres et le latin
+     restent donc en Larken. */
+  :root[lang="ar"] body {
+    font-family: 'Larken', 'Noto Naskh Arabic', 'Geeza Pro', 'Segoe UI', Tahoma, serif;
+  }
+
+  /* L'arabe est cursif : ses lettres se lient et writing-mode les
+     pivoterait une à une, ce qui disloque le mot. Le titre repasse donc à
+     l'horizontale — la bande verticale reste réservée aux langues latines. */
+  :root[lang="ar"] .page {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 2px;
+  }
+  :root[lang="ar"] .page-title {
+    writing-mode: horizontal-tb;
+    transform: none;
+    position: static;
+    font-size: clamp(46px, 7vw, 84px);
+    margin: 0 0 6px;
+    line-height: 1.15;
+  }
+
   /* Sous 760px la bande verticale mangerait la largeur utile :
      le titre reprend une orientation normale au-dessus des cartes */
   @media (max-width: 760px) {
@@ -885,7 +908,7 @@
   /* ---------- Signature ---------- */
   .credit {
     position: fixed;
-    right: 18px;
+    inset-inline-end: 18px;
     bottom: 14px;
     z-index: 15;
     font-size: 11.5px;
@@ -915,7 +938,7 @@
     display: inline-block;
     width: 14px;
     height: 14px;
-    margin-right: 6px;
+    margin-inline-end: 6px;
     vertical-align: -3px;
     background-size: contain;
     background-repeat: no-repeat;

@@ -36,6 +36,9 @@ fichier que l'on ouvre, que l'on envoie par mail ou que l'on publie tel quel.
   arrière. À la relecture, chaque carte est vérifiée et corrigée — types,
   pourcentages hors bornes, rattachements vers une carte absente — plutôt que
   reprise telle quelle.
+- **Trois langues** — français, anglais, arabe — au choix dans les réglages.
+  L'arabe bascule la page en lecture de droite à gauche ; son titre y passe à
+  l'horizontale, l'écriture cursive ne supportant pas la bande verticale.
 - **Thème clair, sombre ou système.** « Système » suit le réglage du navigateur
   et réagit s'il change en cours de session.
 - **Page monochrome**, à deux exceptions près : le doré d'une jauge pleine et
@@ -75,6 +78,7 @@ le hash du commit et l'URL du dépôt, lisibles dans le panneau de réglages.
 | `src/index.html` | structure de la page et marqueurs d'assemblage |
 | `src/styles.css` | feuille de styles complète |
 | `src/app.js` | modèle de données, rendu et interactions |
+| `src/i18n.js` | dictionnaires français, anglais et arabe |
 | `src/fonts.css` | fontes Larken en base64 |
 | `src/logo.css`, `src/favicon.html` | images en base64 |
 | `build.sh` | assemble le tout dans `dist/tasks.html` |

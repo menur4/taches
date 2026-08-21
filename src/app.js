@@ -24,7 +24,7 @@ let tiles = [];
 const flipped = new Set();
 const activeFilters = new Set();
 let filtersOpen = false;
-let prefs = { cols: 'auto', theme: 'system' };
+let prefs = { cols: 'auto', theme: 'system', lang: 'fr' };
 
 // Posé dès le parse du script : sans cela, un système en mode sombre
 // verrait la page s'afficher en clair le temps de lire les préférences.
@@ -74,11 +74,13 @@ async function load() {
     // et une valeur hors liste casserait le sélecteur
     if (saved && COLS_CHOICES.includes(String(saved.cols))) prefs.cols = String(saved.cols);
     if (saved && THEME_CHOICES.includes(saved.theme)) prefs.theme = saved.theme;
+    if (saved && LANGS.includes(saved.lang)) prefs.lang = saved.lang;
   } catch (e) {
     // pas de préférence enregistrée : on garde les valeurs par défaut
   }
   applyCols();
   applyTheme();
+  applyLang();
 
   render();
 }
@@ -89,6 +91,31 @@ function savePrefs() {
   prefsTimer = setTimeout(async () => {
     store.set(PREFS_KEY, JSON.stringify(prefs));
   }, 400);
+}
+
+/* Applique la langue au châssis de la page : sens de lecture, attribut
+   lang, titre, et tous les éléments porteurs d'un data-i18n. Le contenu
+   des cartes, lui, est retraduit par render(). */
+function applyLang() {
+  const dict = I18N[prefs.lang] || I18N.fr;
+  const racine = document.documentElement;
+  racine.lang = prefs.lang;
+  racine.dir = dict.dir;
+  document.title = tr('titre');
+  document.getElementById('pageTitle').textContent = tr('titre');
+
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    el.textContent = tr(el.dataset.i18n);
+  });
+  document.querySelectorAll('[data-i18n-title]').forEach(el => {
+    el.title = tr(el.dataset.i18nTitle);
+  });
+  document.querySelectorAll('[data-i18n-label]').forEach(el => {
+    el.setAttribute('aria-label', tr(el.dataset.i18nLabel));
+  });
+  document.querySelectorAll('.cfg-lang').forEach(b => {
+    b.setAttribute('aria-checked', String(b.dataset.lang === prefs.lang));
+  });
 }
 
 // « Système » n'est pas un thème : c'est une délégation au réglage de l'OS
@@ -137,7 +164,7 @@ function normaliseTiles(brut) {
       const pct = Number(t.pct);
       return {
         id,
-        title: typeof t.title === 'string' ? t.title : 'Sans titre',
+        title: typeof t.title === 'string' ? t.title : tr('sansTitre'),
         tags: Array.isArray(t.tags) ? t.tags.filter(x => typeof x === 'string') : [],
         pct: Number.isFinite(pct) ? Math.max(0, Math.min(100, Math.round(pct))) : 0,
         parentId: t.parentId == null ? null : String(t.parentId),
@@ -250,7 +277,7 @@ function ringSVG(pct) {
   return `
   <svg viewBox="0 0 220 220" role="slider" tabindex="0"
        aria-valuemin="0" aria-valuemax="100" aria-valuenow="${pct}"
-       aria-label="Pourcentage de complétion">
+       aria-label="${tr('pourcentage')}">
     <circle class="ring-track" cx="110" cy="110" r="${R}" fill="none" stroke-width="13"/>
     <circle class="ring-prog" cx="110" cy="110" r="${R}" fill="none" stroke-width="13"
       stroke-linecap="round" transform="rotate(-90 110 110)"
@@ -284,9 +311,9 @@ function pointerPct(svg, e) {
 
 function taskCountLabel(t) {
   const kids = childrenOf(t.id);
-  if (kids.length) return `moyenne de ${kids.length} fille${kids.length > 1 ? 's' : ''}`;
+  if (kids.length) return tr('moyenneFilles', kids.length);
   if (!t.todos.length) return '';
-  return `${t.todos.filter(x => x.done).length}/${t.todos.length} tâches`;
+  return tr('nbTaches', t.todos.filter(x => x.done).length, t.todos.length);
 }
 
 // ---------- Rendu ----------
@@ -318,7 +345,7 @@ function renderFilters() {
       </button>`;
   });
   if (activeFilters.size) {
-    html += '<button class="filter-chip reset" data-reset>✕ Tout afficher</button>';
+    html += `<button class="filter-chip reset" data-reset>✕ ${tr('toutAfficher')}</button>`;
   }
   bar.innerHTML = html;
   applyFiltersPanel();
@@ -361,32 +388,32 @@ function renderGrid() {
       <span class="tag-dot" data-tag="${escapeHtml(tag)}" title="${escapeHtml(tag)}"></span>`).join('');
 
     const tagsHTML = t.tags.map(tag => `
-      <span class="tag" data-tag="${escapeHtml(tag)}">${escapeHtml(tag)}<button class="tag-del" title="Retirer ce tag" aria-label="Retirer le tag ${escapeHtml(tag)}">✕</button></span>`).join('');
+      <span class="tag" data-tag="${escapeHtml(tag)}">${escapeHtml(tag)}<button class="tag-del" title="${tr('retirerTag')}" aria-label="${escapeHtml(tr('retirerTagNomme', tag))}">✕</button></span>`).join('');
 
     const todosHTML = t.todos.length
       ? t.todos.map(td => `
           <li class="todo ${td.done ? 'checked' : ''}" data-todo="${td.id}">
-            <input type="checkbox" class="todo-check" ${td.done ? 'checked' : ''} aria-label="Tâche terminée">
-            <input class="todo-text" value="${escapeHtml(td.text)}" aria-label="Intitulé de la tâche">
-            <button class="todo-del" title="Supprimer la tâche" aria-label="Supprimer la tâche">✕</button>
+            <input type="checkbox" class="todo-check" ${td.done ? 'checked' : ''} aria-label="${tr('tacheTerminee')}">
+            <input class="todo-text" value="${escapeHtml(td.text)}" aria-label="${tr('intituleTache')}">
+            <button class="todo-del" title="${tr('supprimerTache')}" aria-label="${tr('supprimerTache')}">✕</button>
           </li>`).join('')
-      : '<li class="todo-empty">Aucune tâche pour l\'instant.<br>Ajoutez-en une ci-dessous.</li>';
+      : `<li class="todo-empty">${tr('aucuneTache')}<br>${tr('ajoutezEnUne')}</li>`;
 
     card.innerHTML = `
       <div class="card-inner">
         <div class="face front">
           <div class="tile-head">
-            <input class="tile-title" value="${escapeHtml(t.title)}" aria-label="Titre de l'épique" style="flex:1; min-width:0">
+            <input class="tile-title" value="${escapeHtml(t.title)}" aria-label="${tr('titreEpique')}" style="flex:1; min-width:0">
             <span class="tag-dots">${dotsHTML}</span>
           </div>
           <div class="ring-wrap${hasChildren(t) ? ' derived' : ''}">
             ${ringSVG(t.pct)}
-            <button class="ring-center" draggable="false" title="Voir les tâches" aria-label="Voir les tâches">
+            <button class="ring-center" draggable="false" title="${tr('voirTaches')}" aria-label="${tr('voirTaches')}">
               <span class="ring-value">${t.pct}<span class="unit">%</span></span>
               <span class="ring-sub">${taskCountLabel(t)}</span>
             </button>
           </div>
-          <div class="drag-handle" title="Déplacer la carte" aria-label="Déplacer la carte">
+          <div class="drag-handle" title="${tr('deplacerCarte')}" aria-label="${tr('deplacerCarte')}">
             <svg width="12" height="16" viewBox="0 0 12 16" fill="currentColor" aria-hidden="true">
               <circle cx="3" cy="3" r="1.6"/><circle cx="9" cy="3" r="1.6"/>
               <circle cx="3" cy="8" r="1.6"/><circle cx="9" cy="8" r="1.6"/>
@@ -400,16 +427,16 @@ function renderGrid() {
           </div>
           <div class="tag-row">
             ${tagsHTML}
-            <input class="tag-input" list="tagSuggestions" placeholder="+ tag" aria-label="Ajouter un tag">
+            <input class="tag-input" list="tagSuggestions" placeholder="${tr('plusTag')}" aria-label="${tr('ajouterTag')}">
           </div>
           ${t.parentId ? `
           <div class="parent-info">
-            <span>↳ fille de <strong>${escapeHtml(tiles.find(x => x.id === t.parentId)?.title || '?')}</strong></span>
-            <button class="detach-parent" title="Détacher de la carte mère" aria-label="Détacher de la carte mère">✕</button>
+            <span>↳ ${tr('filleDe')} <strong>${escapeHtml(tiles.find(x => x.id === t.parentId)?.title || '?')}</strong></span>
+            <button class="detach-parent" title="${tr('detacher')}" aria-label="${tr('detacher')}">✕</button>
           </div>` : ''}
           <ul class="todo-list">${todosHTML}</ul>
           <div class="todo-add">
-            <button class="icon-btn del del-tile" title="Supprimer l'épique" aria-label="Supprimer l'épique">
+            <button class="icon-btn del del-tile" title="${tr('supprimerEpique')}" aria-label="${tr('supprimerEpique')}">
               <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor"
                    stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                 <path d="M2.7 4.3h10.6"/><path d="M6.4 4.3V3h3.2v1.3"/>
@@ -418,19 +445,19 @@ function renderGrid() {
               </svg>
             </button>
             <span class="todo-add-slot">
-              <button class="add-todo" title="Ajouter une tâche" aria-label="Ajouter une tâche"><span class="plus">+</span> Nouvelle tâche</button>
-              <button class="del-confirm" aria-label="Supprimer définitivement la carte">Supprimer définitivement</button>
+              <button class="add-todo" title="${tr('ajouterTache')}" aria-label="${tr('ajouterTache')}"><span class="plus">+</span> ${tr('nouvelleTache')}</button>
+              <button class="del-confirm" aria-label="${tr('supprimerDefinitivementCarte')}">${tr('supprimerDefinitivement')}</button>
             </span>
-            <button class="icon-btn flip-btn" title="Retour à la jauge" aria-label="Retour à la jauge">⇄</button>
+            <button class="icon-btn flip-btn" title="${tr('retourJauge')}" aria-label="${tr('retourJauge')}">⇄</button>
           </div>
           <div class="assoc-overlay" aria-hidden="true">
             <div class="assoc-zone" data-side="left">
-              <span class="assoc-big">Fille</span>
-              <span class="assoc-small">de cette carte</span>
+              <span class="assoc-big">${tr('fille')}</span>
+              <span class="assoc-small">${tr('deCetteCarte')}</span>
             </div>
             <div class="assoc-zone" data-side="right">
-              <span class="assoc-big">Mère</span>
-              <span class="assoc-small">de cette carte</span>
+              <span class="assoc-big">${tr('mere')}</span>
+              <span class="assoc-small">${tr('deCetteCarte')}</span>
             </div>
           </div>
         </div>
@@ -440,11 +467,11 @@ function renderGrid() {
 
   const add = document.createElement('button');
   add.className = 'add-tile';
-  add.setAttribute('aria-label', 'Nouvelle épique');
-  add.title = 'Nouvelle épique';
+  add.setAttribute('aria-label', tr('nouvelleEpique'));
+  add.title = tr('nouvelleEpique');
   add.innerHTML = '<span class="add-ring" aria-hidden="true"></span>';
   add.onclick = () => {
-    const newTile = { id: 't' + Date.now(), title: 'Nouvelle épique', tags: [...activeFilters], pct: 0, todos: [] };
+    const newTile = { id: 't' + Date.now(), title: tr('nouvelleEpique'), tags: [...activeFilters], pct: 0, todos: [] };
     tiles.push(newTile);
     saveTiles();
     render();
@@ -879,7 +906,7 @@ function bindEvents() {
       const t = getTile(e.currentTarget);
       if (!t) return;
       const newId = 'td' + Date.now();
-      t.todos.push({ id: newId, text: 'Nouvelle tâche', done: false });
+      t.todos.push({ id: newId, text: tr('nouvelleTache'), done: false });
       saveTiles();
       render();
       const inp = document.querySelector(`.card[data-id="${t.id}"] .todo[data-todo="${newId}"] .todo-text`);
@@ -931,7 +958,7 @@ document.getElementById('btnExport').addEventListener('click', () => {
   // le révoquer aussitôt annulerait le téléchargement en cours
   setTimeout(() => URL.revokeObjectURL(url), 10000);
   const n = tiles.length;
-  noteCfg(`${n} carte${n > 1 ? 's' : ''} exportée${n > 1 ? 's' : ''}.`);
+  noteCfg(tr('exportOk', n));
 });
 
 const fileImport = document.getElementById('fileImport');
@@ -944,27 +971,26 @@ fileImport.addEventListener('change', () => {
   const fichier = fileImport.files && fileImport.files[0];
   if (!fichier) return;
   const lecteur = new FileReader();
-  lecteur.onerror = () => noteCfg('Fichier illisible.', true);
+  lecteur.onerror = () => noteCfg(tr('fichierIllisible'), true);
   lecteur.onload = () => {
     let donnees;
     try { donnees = JSON.parse(lecteur.result); }
-    catch (e) { noteCfg('Ce fichier n\'est pas du JSON valide.', true); return; }
+    catch (e) { noteCfg(tr('jsonInvalide'), true); return; }
     // on accepte l'enveloppe comme le tableau nu
     const liste = normaliseTiles(Array.isArray(donnees) ? donnees : donnees && donnees.tiles);
     if (!liste.length) {
-      noteCfg('Aucune carte exploitable dans ce fichier.', true);
+      noteCfg(tr('aucuneCarte'), true);
       return;
     }
     const n = liste.length;
-    if (!confirm(`Remplacer les ${tiles.length} carte(s) actuelles par les ${n} carte(s) `
-               + `du fichier ? Cette action ne peut pas être annulée.`)) return;
+    if (!confirm(tr('confirmImport', tiles.length, n))) return;
     tiles = liste;
     flipped.clear();
     activeFilters.clear();
     recomputeDerived();
     saveTiles();
     render();
-    noteCfg(`${n} carte${n > 1 ? 's' : ''} importée${n > 1 ? 's' : ''}.`);
+    noteCfg(tr('importOk', n));
   };
   lecteur.readAsText(fichier);
 });
@@ -986,6 +1012,15 @@ document.querySelectorAll('.cfg-choice[data-cols]').forEach(btn => {
   btn.addEventListener('click', () => {
     prefs.cols = btn.dataset.cols;
     applyCols();
+    savePrefs();
+  });
+});
+
+document.querySelectorAll('.cfg-lang').forEach(btn => {
+  btn.addEventListener('click', () => {
+    prefs.lang = btn.dataset.lang;
+    applyLang();
+    render();          // les libellés vivant dans les cartes
     savePrefs();
   });
 });

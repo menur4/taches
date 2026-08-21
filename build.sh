@@ -38,6 +38,7 @@ inline() {  # remplace la ligne-marqueur $1 par le contenu de $2
   inline '/*__FONTS__*/' src/fonts.css |
   inline '/*__LOGO__*/'  src/logo.css |
   inline '/*__CSS__*/'   src/styles.css |
+  inline '//__I18N__'    src/i18n.js |
   inline '//__JS__'      src/app.js |
   awk -v v="$version" -v c="$commit" -v u="$repo_url" '
     { gsub(/__VERSION__/, v); gsub(/__COMMIT__/, c); gsub(/__REPO_URL__/, u); print }

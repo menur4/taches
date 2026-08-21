@@ -17,7 +17,7 @@
 
 <div class="page">
 
-<h1 class="page-title">tâches</h1>
+<h1 class="page-title" id="pageTitle">tâches</h1>
 
 <main class="page-main">
 
@@ -30,7 +30,7 @@
   </div>
 
   <button class="filters-toggle" id="filtersToggle" aria-expanded="false" aria-controls="filtersPanel"
-          aria-label="Filtrer les cartes" title="Filtrer les cartes" hidden>
+          data-i18n-label="filtrer" data-i18n-title="filtrer" hidden>
     <svg width="30" height="30" viewBox="0 0 16 16" aria-hidden="true">
       <path d="M2.5 3.5 H13.5 L9.3 8.7 V13.3 L6.7 11.9 V8.7 Z" fill="none" stroke="currentColor"
             stroke-width="1" stroke-linejoin="round"/>
@@ -42,7 +42,7 @@
        la popup s'ouvre sous la roue, alignée sur son bord droit -->
   <div class="cfg-anchor">
     <button class="cfg-toggle" id="cfgToggle" aria-expanded="false" aria-controls="cfgPanel"
-            aria-haspopup="dialog" aria-label="Réglages d'affichage" title="Réglages d'affichage">
+            aria-haspopup="dialog" data-i18n-label="reglages" data-i18n-title="reglages">
       <svg width="26" height="26" viewBox="0 0 24 24" aria-hidden="true" fill="none"
            stroke="currentColor" stroke-width="1.25" stroke-linejoin="round">
         <circle cx="12" cy="12" r="3.3"/>
@@ -51,26 +51,36 @@
     </button>
 
     <div class="cfg-popover" id="cfgPanel" role="dialog" aria-label="Réglages d'affichage" hidden>
-      <div class="cfg-label" id="cfgColsLabel">Colonnes</div>
+      <div class="cfg-label" id="cfgColsLabel" data-i18n="colonnes">Colonnes</div>
       <div class="cfg-choices" role="radiogroup" aria-labelledby="cfgColsLabel">
-        <button class="cfg-choice" data-cols="auto" role="radio" aria-checked="true">Auto</button>
+        <button class="cfg-choice" data-cols="auto" role="radio" aria-checked="true" data-i18n="auto">Auto</button>
         <button class="cfg-choice" data-cols="2" role="radio" aria-checked="false">2</button>
         <button class="cfg-choice" data-cols="3" role="radio" aria-checked="false">3</button>
         <button class="cfg-choice" data-cols="4" role="radio" aria-checked="false">4</button>
         <button class="cfg-choice" data-cols="5" role="radio" aria-checked="false">5</button>
       </div>
 
-      <div class="cfg-label cfg-label-next" id="cfgThemeLabel">Thème</div>
+      <div class="cfg-label cfg-label-next" id="cfgThemeLabel" data-i18n="theme">Thème</div>
       <div class="cfg-choices" role="radiogroup" aria-labelledby="cfgThemeLabel">
-        <button class="cfg-choice" data-theme="light" role="radio" aria-checked="false">Clair</button>
-        <button class="cfg-choice" data-theme="dark" role="radio" aria-checked="false">Sombre</button>
-        <button class="cfg-choice" data-theme="system" role="radio" aria-checked="true">Système</button>
+        <button class="cfg-choice" data-theme="light" role="radio" aria-checked="false" data-i18n="clair">Clair</button>
+        <button class="cfg-choice" data-theme="dark" role="radio" aria-checked="false" data-i18n="sombre">Sombre</button>
+        <button class="cfg-choice" data-theme="system" role="radio" aria-checked="true" data-i18n="systeme">Système</button>
       </div>
 
-      <div class="cfg-label cfg-label-next" id="cfgDataLabel">Données</div>
+      <div class="cfg-label cfg-label-next" id="cfgLangLabel" data-i18n="langue">Langue</div>
+      <div class="cfg-choices" role="radiogroup" aria-labelledby="cfgLangLabel">
+        <button class="cfg-choice cfg-lang" data-lang="fr" role="radio" aria-checked="true"
+                lang="fr" title="Français"><span class="drapeau">🇫🇷</span><span class="code">FR</span></button>
+        <button class="cfg-choice cfg-lang" data-lang="en" role="radio" aria-checked="false"
+                lang="en" title="English"><span class="drapeau">🇬🇧</span><span class="code">EN</span></button>
+        <button class="cfg-choice cfg-lang" data-lang="ar" role="radio" aria-checked="false"
+                lang="ar" title="العربية"><span class="drapeau">🇸🇦</span><span class="code">AR</span></button>
+      </div>
+
+      <div class="cfg-label cfg-label-next" id="cfgDataLabel" data-i18n="donnees">Données</div>
       <div class="cfg-choices" role="group" aria-labelledby="cfgDataLabel">
-        <button class="cfg-choice cfg-action" id="btnExport">Exporter</button>
-        <button class="cfg-choice cfg-action" id="btnImport">Importer</button>
+        <button class="cfg-choice cfg-action" id="btnExport" data-i18n="exporter">Exporter</button>
+        <button class="cfg-choice cfg-action" id="btnImport" data-i18n="importer">Importer</button>
       </div>
       <div class="cfg-note" id="cfgNote" role="status" aria-live="polite"></div>
       <input type="file" id="fileImport" accept="application/json,.json" hidden>
@@ -80,7 +90,7 @@
            à interroger à l'exécution. Sans remote, l'URL est vide et le CSS
            neutralise le lien. -->
       <a class="cfg-meta" href="__REPO_URL__" target="_blank" rel="noopener noreferrer"
-         title="Voir le dépôt sur GitHub">
+         data-i18n-title="voirDepot">
         <span class="cfg-version">v__VERSION__</span>
         <span class="cfg-commit">__COMMIT__</span>
       </a>
@@ -98,11 +108,12 @@
 <!-- Le cœur est décoratif : masqué aux lecteurs d'écran, doublé d'un
      équivalent textuel pour que la phrase reste lisible à l'oreille -->
 <footer>
-  <a class="credit" href="https://www.menur4.fr" target="_blank" rel="noopener noreferrer"
+  <a class="credit" dir="ltr" href="https://www.menur4.fr" target="_blank" rel="noopener noreferrer"
      ><span class="credit-logo" aria-hidden="true"></span>Made with <span class="credit-heart" aria-hidden="true">♥</span><span class="credit-alt">love</span> by menuR4</a>
 </footer>
 
 <script>
+//__I18N__
 //__JS__
 </script>
 </body>
