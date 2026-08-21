@@ -1,0 +1,916 @@
+  :root {
+    --bg: #f6f5f2;
+    --panel: #ffffff;
+    --panel-edge: #e7e4de;
+    --ink: #24272b;
+    --ink-dim: #8b8f96;
+    --track: #eeece7;
+    /* Page monochrome : l'accent est l'encre elle-même. Deux exceptions
+       assumées — le doré d'une jauge pleine, et le cœur de la signature. */
+    --accent: #24272b;
+    --accent-soft: rgba(36,39,43,.07);
+    --gold: #b08d2e;
+    --red-soft: #c9705f;
+    --red-soft-tint: rgba(201,112,95,.08);
+    --red-solid: #c9705f;
+    /* texte posé SUR un aplat d'accent : il s'inverse avec le thème,
+       un #fff en dur deviendrait illisible sur l'accent clair du mode sombre */
+    --on-accent: #ffffff;
+    --ink-faint: #b9bcc1;      /* placeholders, icônes au repos */
+    --dash: #d5d2ca;           /* liserés pointillés */
+    --panel-tint: #faf9f7;     /* survol au creux d'une jauge */
+    --veil: rgba(246,245,242,.92);
+    --shadow: 30,30,25;        /* composantes RVB des ombres portées */
+  }
+
+  /* Mode sombre — même page, valeurs inversées. Déclaré deux fois :
+     d'abord pour la préférence système (sauf choix explicite « clair »),
+     puis pour le choix explicite « sombre », qui doit primer partout. */
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #24262a;
+      --panel: #2e3136;
+      --panel-edge: #3e4249;
+      --ink: #eceae5;
+      --ink-dim: #9aa0a8;
+      --track: #3b3f45;
+      --accent: #eceae5;
+      --accent-soft: rgba(236,234,229,.10);
+      --gold: #d6b055;
+      --red-soft: #cf8270;
+      --red-soft-tint: rgba(207,130,112,.14);
+      --red-solid: #a8503c;
+      --on-accent: #24262a;
+      --ink-faint: #6c7178;
+      --dash: #4b5057;
+      --panel-tint: #363a40;
+      --veil: rgba(36,38,42,.94);
+      --shadow: 10,11,13;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #24262a;
+    --panel: #2e3136;
+    --panel-edge: #3e4249;
+    --ink: #eceae5;
+    --ink-dim: #9aa0a8;
+    --track: #3b3f45;
+    --accent: #eceae5;
+    --accent-soft: rgba(236,234,229,.10);
+    --gold: #d6b055;
+    --red-soft: #cf8270;
+    --red-soft-tint: rgba(207,130,112,.14);
+    --red-solid: #a8503c;
+    --on-accent: #24262a;
+    --ink-faint: #6c7178;
+    --dash: #4b5057;
+    --panel-tint: #363a40;
+    --veil: rgba(36,38,42,.94);
+    --shadow: 10,11,13;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: 'Larken', Georgia, serif;
+    min-height: 100vh;
+    padding: 36px 24px 64px;
+  }
+
+  /* ---------- Mise en page : titre vertical + colonne de contenu ---------- */
+  .page {
+    max-width: 1700px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    gap: 34px;
+    align-items: start;
+  }
+  /* min-width: 0 — sans quoi la grille de cartes imposerait sa largeur
+     min-content à la colonne et déborderait de la page */
+  .page-main { min-width: 0; }
+
+  /* writing-mode plutôt qu'un rotate() : le navigateur calcule alors la
+     vraie hauteur du bloc, là où un élément pivoté garde la boîte de son
+     texte horizontal et déborderait de la colonne.
+     Le rotate(180deg) inverse le sens : lecture de bas en haut. */
+  .page-title {
+    writing-mode: vertical-rl;
+    transform: rotate(180deg);
+    position: sticky;
+    top: 36px;
+    align-self: start;   /* requis : un item étiré ne peut pas coller */
+    /* Le mot doit remplir la hauteur de l'écran. En Larken 700, sa hauteur
+       vaut 2,92 x la font-size (mesuré) et la colonne exactement 1 x :
+       on inverse le rapport en retranchant les 120px de marges hautes et
+       basses, et on plafonne à 300px pour ne pas étrangler les cartes. */
+    font-size: clamp(64px, calc((100vh - 120px) / 2.92), 300px);
+    font-weight: 700;
+    line-height: 1;
+    letter-spacing: -0.02em;
+    user-select: none;
+    /* aligne le sommet du mot sur la première rangée de cartes
+       (40px de header + 10px de marge) */
+    margin-top: 50px;
+  }
+
+  header {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 2px;
+    min-height: 40px;
+    margin-bottom: 10px;
+  }
+
+  /* ---------- Réglages d'affichage ---------- */
+  .cfg-anchor { position: relative; display: inline-flex; }
+
+  .cfg-toggle {
+    color: var(--ink-dim);
+    background: none;
+    border: 0;
+    padding: 5px 6px;
+    border-radius: 8px;
+    cursor: pointer;
+    display: inline-flex;
+    transition: color .15s, background .15s;
+  }
+  .cfg-toggle:hover { color: var(--ink); background: var(--panel); }
+  .cfg-toggle[aria-expanded="true"] { color: var(--ink); background: var(--panel); }
+
+  .cfg-popover {
+    position: absolute;
+    top: calc(100% + 8px);
+    right: 0;
+    z-index: 20;
+    background: var(--panel);
+    border: 1px solid var(--panel-edge);
+    border-radius: 12px;
+    padding: 13px 14px;
+    box-shadow: 0 6px 24px rgba(var(--shadow),.13);
+    min-width: 210px;
+  }
+  .cfg-popover[hidden] { display: none; }
+
+  .cfg-label {
+    font-size: 12px;
+    color: var(--ink-dim);
+    margin-bottom: 9px;
+  }
+  .cfg-choices { display: flex; gap: 5px; }
+  /* second réglage : un filet le sépare du premier */
+  .cfg-label-next {
+    margin-top: 13px;
+    padding-top: 12px;
+    border-top: 1px solid var(--panel-edge);
+  }
+
+  .cfg-choice {
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 500;
+    flex: 1;
+    padding: 7px 0;
+    border-radius: 7px;
+    border: 1px solid var(--panel-edge);
+    background: var(--panel);
+    color: var(--ink);
+    cursor: pointer;
+    transition: background .15s, border-color .15s, color .15s;
+  }
+  .cfg-choice:hover { border-color: var(--accent); }
+  .cfg-choice[aria-checked="true"] {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: var(--on-accent);
+  }
+  /* « Auto » porte un mot, les autres un chiffre : on lui laisse sa place */
+  .cfg-choice[data-cols="auto"] { flex: 1.6; }
+  .cfg-choice[data-theme] { padding: 7px 4px; font-size: 12px; }
+
+  .cfg-meta {
+    margin-top: 13px;
+    padding-top: 10px;
+    border-top: 1px solid var(--panel-edge);
+    text-align: center;
+    line-height: 1.45;
+  }
+  .cfg-version { font-size: 11.5px; color: var(--ink-dim); }
+  .cfg-commit {
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 10.5px;
+    color: var(--ink-faint);
+    letter-spacing: .02em;
+  }
+
+  /* ---------- Filtres : accordéon ---------- */
+  /* Entonnoir seul dans l'en-tête : aucun libellé, la page d'accueil ne
+     porte que le titre. Il n'apparaît que si au moins un tag existe. */
+  .filters-toggle {
+    color: var(--ink-dim);
+    background: none;
+    border: 0;
+    padding: 3px 5px;
+    border-radius: 8px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: color .15s, background .15s;
+  }
+  .filters-toggle:hover { color: var(--ink); background: var(--panel); }
+  /* Panneau ouvert : l'icône passe en encre pleine — seul signe d'état
+     une fois le chevron retiré (le panneau déplié fait le reste) */
+  .filters-toggle[aria-expanded="true"] { color: var(--ink); }
+
+  /* Nombre de filtres actifs : seul indice, panneau replié, que la grille
+     est tronquée — sans lui, des cartes disparaîtraient sans explication */
+  .ft-count {
+    font-size: 12px;
+    font-variant-numeric: tabular-nums;
+    line-height: 1;
+    padding: 2px 6px;
+    border-radius: 999px;
+    background: var(--accent);
+    color: var(--on-accent);
+  }
+  .ft-count[hidden] { display: none; }
+
+  /* Le panneau vit dans le header, sur la ligne laissée libre par le
+     titre vertical. Fermé, il sort du flux (display:none) : sinon des
+     chips invisibles pourraient passer à la ligne et grandir le header.
+     Ouvert, il tient dans les 40px de min-height du header, donc la
+     grille de cartes ne bouge pas d'un pixel. */
+  .filters-panel {
+    display: none;
+    flex: 1;
+    min-width: 0;
+  }
+  .filters-panel.open {
+    display: block;
+    animation: filters-in .22s cubic-bezier(.4, .2, .2, 1);
+  }
+  @keyframes filters-in {
+    from { opacity: 0; transform: translateX(10px); }
+  }
+
+  .filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
+    justify-content: flex-end;   /* les chips sortent du bouton, à droite */
+    padding: 2px;                /* le halo de survol des chips sinon rogné */
+  }
+  .filter-chip {
+    font-family: inherit;
+    font-size: 12.5px;
+    font-weight: 500;
+    padding: 4px 11px;
+    border-radius: 999px;
+    border: 1px solid var(--panel-edge);
+    background: var(--panel);
+    color: var(--ink);
+    cursor: pointer;
+    transition: background .15s, color .15s, box-shadow .15s;
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+  }
+  .filter-chip .count {
+    font-size: 11px;
+    color: var(--ink-dim);
+    font-variant-numeric: tabular-nums;
+  }
+  .filter-chip:hover { box-shadow: 0 0 0 1px var(--accent); }
+  .filter-chip.active {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: var(--on-accent);
+  }
+  .filter-chip.active .count { color: color-mix(in srgb, var(--on-accent) 78%, transparent); }
+
+  .filter-chip.reset {
+    border: 1px dashed var(--panel-edge);
+    color: var(--ink-dim);
+    padding: 4px 11px;
+  }
+  .filter-chip.reset:hover { color: var(--red-soft); border-color: var(--red-soft); box-shadow: none; }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 18px;
+  }
+  /* Densité choisie dans le panneau d'affichage. minmax(0, 1fr) et non
+     1fr : sans le 0, une carte au contenu large élargirait sa colonne. */
+  .grid[data-cols="2"] { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .grid[data-cols="3"] { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .grid[data-cols="4"] { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .grid[data-cols="5"] { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+
+  /* ---------- Carte retournable ---------- */
+  .card {
+    perspective: 1200px;
+    min-height: 340px;
+  }
+  .card.dragging { opacity: .45; }
+  .card.dragging .face { box-shadow: 0 8px 24px rgba(var(--shadow),.18); }
+
+  /* Pastille compacte servant d'image de drag */
+  .drag-pill {
+    position: fixed;
+    top: -9999px;
+    left: -9999px;
+    padding: 7px 14px;
+    background: var(--panel);
+    border: 1px solid var(--panel-edge);
+    border-radius: 999px;
+    box-shadow: 0 4px 14px rgba(var(--shadow),.18);
+    font-family: 'Larken', Georgia, serif;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--ink);
+    white-space: nowrap;
+    pointer-events: none;
+  }
+
+  /* Poignée de déplacement : coin bas droit, révélée au survol de la carte */
+  .drag-handle {
+    position: absolute;
+    right: 8px;
+    bottom: 8px;
+    width: 26px;
+    height: 26px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 7px;
+    color: var(--ink-faint);
+    opacity: 0;
+    cursor: grab;
+    transition: opacity .15s, background .15s, color .15s;
+  }
+  .card:hover .drag-handle { opacity: .55; }
+  .drag-handle:hover { opacity: 1 !important; background: var(--bg); color: var(--ink-dim); }
+  .drag-handle:active { cursor: grabbing; }
+
+  /* Le recto se retourne d'un clic : le curseur l'annonce */
+  .face.front { cursor: pointer; }
+  .card.hidden { display: none; }
+  .card-inner {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    min-height: 340px;
+    transform-style: preserve-3d;
+    transition: transform .55s cubic-bezier(.4, .2, .2, 1);
+  }
+  .card.flipped .card-inner { transform: rotateY(180deg); }
+
+  .face {
+    position: absolute;
+    inset: 0;
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+    background: var(--panel);
+    border: 1px solid var(--panel-edge);
+    border-radius: 14px;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+    box-shadow: 0 1px 3px rgba(var(--shadow),.06);
+  }
+  .face.back { transform: rotateY(180deg); }
+  /* La face cachée est invisible mais resterait cliquable : on coupe ses
+     événements pour que la face visible reçoive réellement la souris */
+  .card:not(.flipped) .face.back { pointer-events: none; }
+  .card.flipped .face.front { pointer-events: none; }
+  .card.done .face { border-color: color-mix(in srgb, var(--gold) 45%, transparent); }
+
+  .tile-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 6px; }
+
+  .tile-title {
+    font-weight: 600;
+    font-size: 15px;
+    line-height: 1.35;
+    background: transparent;
+    border: none;
+    color: var(--ink);
+    font-family: inherit;
+    width: 100%;
+    padding: 2px 4px;
+    border-radius: 5px;
+  }
+  .tile-title:focus { outline: 1px solid var(--panel-edge); background: var(--bg); }
+
+  /* ---------- Tags ---------- */
+  /* Recto : simples points colorés en haut à droite */
+  .tag-dots {
+    display: flex;
+    gap: 5px;
+    align-items: center;
+    flex-shrink: 0;
+    padding-top: 8px;
+  }
+  .tag-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: var(--ink);
+    opacity: .8;
+  }
+
+  /* Verso : pastilles complètes avec gestion */
+  .tag-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+    align-items: center;
+    padding: 0 2px 4px;
+    border-bottom: 1px solid var(--panel-edge);
+  }
+  .tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 11.5px;
+    font-weight: 500;
+    padding: 2.5px 9px;
+    border-radius: 999px;
+    background: var(--track);
+    color: var(--ink);
+    cursor: default;
+  }
+  .tag button {
+    background: none; border: none;
+    color: inherit; opacity: .55;
+    cursor: pointer;
+    font-size: 11px; line-height: 1;
+    padding: 0 1px;
+  }
+  .tag button:hover { opacity: 1; }
+  .tag-input {
+    font-family: inherit;
+    font-size: 11.5px;
+    border: none;
+    background: transparent;
+    color: var(--ink-dim);
+    width: 64px;
+    padding: 2.5px 4px;
+    border-radius: 999px;
+  }
+  .tag-input:focus {
+    outline: 1px solid var(--panel-edge);
+    background: var(--bg);
+    color: var(--ink);
+    width: 110px;
+  }
+  .tag-input::placeholder { color: var(--ink-faint); }
+
+  /* Rattachement affiché au verso : simple mention détachable */
+  .parent-info {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 2px 2px 6px;
+    border-bottom: 1px solid var(--panel-edge);
+    font-size: 12px;
+    color: var(--ink-dim);
+  }
+  .parent-info strong { color: var(--ink); font-weight: 500; }
+  .parent-info button {
+    background: none; border: none;
+    color: var(--ink-faint); cursor: pointer;
+    font-size: 12px; padding: 1px 5px;
+    border-radius: 4px;
+    margin-left: auto;
+  }
+  .parent-info button:hover { color: var(--red-soft); }
+
+  /* Zones de dépôt fille/mère, affichées pendant le survol d'un drag
+     au-dessus d'une carte retournée */
+  .assoc-overlay {
+    position: absolute;
+    inset: 0;
+    border-radius: 14px;
+    display: none;
+    pointer-events: none;
+    overflow: hidden;
+    z-index: 2;
+  }
+  .card.assoc-visible .assoc-overlay { display: flex; }
+  .assoc-zone {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    background: var(--veil);
+    border: 2px dashed var(--panel-edge);
+    transition: background .1s, border-color .1s;
+  }
+  .assoc-zone:first-child { border-radius: 12px 0 0 12px; border-right-width: 1px; }
+  .assoc-zone:last-child { border-radius: 0 12px 12px 0; border-left-width: 1px; }
+  .assoc-zone .assoc-big { font-size: 17px; font-weight: 700; color: var(--ink-dim); }
+  .assoc-zone .assoc-small { font-size: 11px; color: var(--ink-dim); }
+  .assoc-zone.active {
+    background: color-mix(in srgb, var(--accent) 10%, white);
+    border-color: var(--accent);
+  }
+  .assoc-zone.active .assoc-big { color: var(--accent); }
+  .assoc-zone.active.invalid {
+    background: color-mix(in srgb, var(--red-soft) 10%, white);
+    border-color: var(--red-soft);
+  }
+  .assoc-zone.active.invalid .assoc-big { color: var(--red-soft); }
+
+  .icon-btn {
+    background: none; border: none;
+    color: var(--ink-faint); cursor: pointer;
+    font-size: 15px; line-height: 1;
+    padding: 5px 7px; border-radius: 6px;
+    flex-shrink: 0;
+    transition: color .15s, background .15s;
+  }
+  .icon-btn:hover { color: var(--accent); background: var(--accent-soft); }
+  .icon-btn.del:hover { color: var(--red-soft); background: var(--red-soft-tint); }
+  /* poubelle armée : elle reste rouge tant que la confirmation est ouverte */
+  .card.confirming .del-tile { color: var(--red-soft); background: var(--red-soft-tint); }
+  .icon-btn svg { display: block; }
+
+  /* Confirmation de suppression : masquée tant que la poubelle n'a pas
+     été cliquée, elle prend place à gauche des deux icônes du verso */
+  .del-confirm {
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 500;
+    line-height: 1;
+    padding: 7px 10px;
+    border: 1.5px solid var(--red-solid);
+    border-radius: 8px;
+    background: var(--red-solid);
+    color: #fff;   /* toujours sur un aplat rouge soutenu, jamais sur l'accent */
+    cursor: pointer;
+    /* pas de nowrap : sur une carte étroite le libellé déborderait du
+       bouton. Il passe à la ligne comme « Nouvelle tâche », et comme les
+       deux partagent la même cellule, la bascule ne change aucune hauteur. */
+    text-align: center;
+    line-height: 1.25;
+    /* visibility, et pas seulement opacity : un bouton transparent
+       resterait atteignable au clavier */
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity .18s, visibility .18s, filter .15s;
+  }
+  .card.confirming .del-confirm { opacity: 1; visibility: visible; }
+  .card.confirming .add-todo { opacity: 0; visibility: hidden; }
+  .del-confirm:hover { filter: brightness(.92); }
+  .del-confirm:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+
+  /* ---------- Anneau circulaire ---------- */
+  .ring-wrap {
+    position: relative;
+    width: min(72%, 215px);
+    aspect-ratio: 1;
+    container-type: inline-size;   /* unité de référence du % : cqw */
+    margin: 6px auto 2px;
+    flex-shrink: 0;
+  }
+  .ring-wrap svg {
+    display: block;
+    width: 100%;
+    height: 100%;
+    touch-action: none;
+    overflow: visible;
+    /* Le SVG lui-même ne capte plus la souris : seule la bande de
+       l'anneau (.ring-hit) est interactive, les coins du carré
+       redeviennent une zone de saisie de la carte */
+    pointer-events: none;
+  }
+  /* Pas de surbrillance après un clic ; au clavier, un anneau de focus rond */
+  .ring-wrap svg:focus { outline: none; }
+  .ring-wrap svg:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 50%; }
+  .ring-hit {
+    pointer-events: stroke;
+    cursor: crosshair;
+  }
+  /* Carte mère : jauge dérivée des filles, non réglable */
+  .ring-wrap.derived .ring-hit { pointer-events: none; }
+  .ring-wrap.derived .ring-handle,
+  .ring-wrap.derived .ring-bubble { display: none; }
+  .ring-track { stroke: var(--track); }
+  .ring-prog {
+    stroke: var(--accent);
+    transition: stroke-dashoffset .35s ease, stroke .35s;
+  }
+  .card.done .ring-prog { stroke: var(--gold); }
+  .ring-prog.dragging { transition: none; }
+
+  /* Poignée + bulle de valeur : masquées au repos, révélées au survol de l'anneau */
+  .ring-handle, .ring-bubble {
+    opacity: 0;
+    transition: opacity .18s;
+    pointer-events: none;
+  }
+  .ring-wrap:hover .ring-handle,
+  .ring-wrap:hover .ring-bubble,
+  .ring-wrap.adjusting .ring-handle,
+  .ring-wrap.adjusting .ring-bubble { opacity: 1; }
+  .handle-dot { fill: var(--accent); stroke: var(--panel); stroke-width: 2; }
+  .ring-bubble path { fill: var(--accent); }
+  .card.done .ring-bubble path { fill: var(--gold); }
+  .ring-bubble text {
+    fill: var(--on-accent);
+    font-family: 'Larken', Georgia, serif;
+    font-size: 15px;
+    font-weight: 700;
+  }
+
+  /* Centre : valeur + accès aux tâches */
+  .ring-center {
+    position: absolute;
+    inset: 18%;
+    border-radius: 50%;
+    border: none;
+    background: transparent;
+    font-family: inherit;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background .15s;
+  }
+  .ring-center:hover { background: var(--panel-tint); }
+  .ring-value {
+    font-size: 28cqw;
+    font-weight: 700;
+    color: var(--ink);
+    letter-spacing: -0.037em;
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+  }
+  /* en em : le symbole et son exposant suivent la valeur sans réglage */
+  .ring-value .unit {
+    font-size: 0.42em;
+    font-weight: 500;
+    color: var(--ink-dim);
+    letter-spacing: 0;
+    vertical-align: 0.83em;
+  }
+
+  /* Hors flux, sous le centre : sa présence ou son absence ne déplace
+     plus la valeur, qui reste au centre de l'anneau dans tous les cas.
+     15cqw = la demi-hauteur de la valeur (14) plus un filet d'air. */
+  .ring-sub {
+    position: absolute;
+    top: 50%;
+    left: 0;
+    right: 0;
+    margin-top: 15cqw;
+    font-size: 11.5px;
+    color: var(--ink-dim);
+    text-align: center;
+    white-space: nowrap;      /* jamais deux lignes : le centrage tiendrait plus */
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  /* ---------- Verso : to-do list ---------- */
+  .back-head {
+    display: flex;
+    align-items: center;
+    min-height: 20px;
+  }
+  .back-title {
+    font-weight: 600;
+    font-size: 14px;
+    line-height: 1.3;
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+  }
+
+  .todo-list {
+    list-style: none;
+    overflow-y: auto;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    margin: 2px 0;
+  }
+
+  .todo {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    padding: 6px 6px;
+    border-radius: 7px;
+    transition: background .15s;
+  }
+  .todo:hover { background: var(--bg); }
+  .todo:hover .todo-del { opacity: 1; }
+
+  .todo-check {
+    width: 17px; height: 17px;
+    accent-color: var(--ink);
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+
+  .todo-text {
+    flex: 1;
+    font-size: 13.5px;
+    line-height: 1.35;
+    background: transparent;
+    border: none;
+    color: var(--ink);
+    font-family: inherit;
+    padding: 1px 3px;
+    border-radius: 4px;
+    min-width: 0;
+  }
+  .todo-text:focus { outline: 1px solid var(--panel-edge); background: var(--panel); }
+  .todo.checked .todo-text { color: var(--ink-dim); text-decoration: line-through; }
+
+  .todo-del {
+    opacity: 0;
+    background: none; border: none;
+    color: var(--ink-faint); cursor: pointer;
+    font-size: 13px; padding: 2px 5px;
+    border-radius: 4px;
+    transition: opacity .15s, color .15s;
+    flex-shrink: 0;
+  }
+  .todo-del:hover { color: var(--red-soft); }
+
+  .todo-empty {
+    font-size: 13px;
+    color: var(--ink-dim);
+    text-align: center;
+    padding: 18px 8px;
+  }
+
+  /* Barre du bas : ajout de tâche à gauche, actions de la carte à droite.
+     Les icônes ont quitté l'en-tête du verso pour que le titre y dispose
+     de toute la largeur, comme au recto, et puisse passer sur deux lignes
+     sans décaler quoi que ce soit. */
+  .todo-add {
+    border-top: 1px solid var(--panel-edge);
+    padding-top: 8px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  /* Les deux boutons occupent la même cellule : passer de l'un à l'autre
+     ne change donc aucune dimension, la barre ne bouge pas. */
+  .todo-add-slot {
+    flex: 1;
+    min-width: 0;
+    display: grid;
+  }
+  .todo-add-slot > * { grid-area: 1 / 1; }
+
+  .add-todo {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 500;
+    padding: 7px 10px;
+    border: 1.5px dashed var(--dash);
+    border-radius: 8px;
+    background: transparent;
+    color: var(--ink-dim);
+    cursor: pointer;
+    transition: color .15s, border-color .15s, opacity .18s, visibility .18s;
+  }
+  .add-todo:hover { color: var(--accent); border-color: var(--accent); }
+  .add-todo .plus { font-size: 16px; line-height: 1; font-weight: 400; }
+
+  .add-tile {
+    border: 1.5px dashed var(--dash);
+    border-radius: 14px;
+    background: transparent;
+    color: var(--ink-dim);
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    min-height: 340px;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    transition: color .2s, border-color .2s;
+  }
+  .add-tile:hover { color: var(--accent); border-color: var(--accent); }
+
+  /* Anneau d'ajout, calé sur la ligne médiane des jauges voisines : le SVG
+     ne remplit pas sa boîte, son cercle est tracé au rayon 92 d'un viewBox
+     de 220, soit 83,6 % — reprendre les 72%/215px de .ring-wrap donnerait
+     un rond visiblement plus grand que les jauges.
+     72 x 0,836 = 60,2 % ; 215 x 0,836 = 180px, plus l'épaisseur du trait. */
+  .add-ring {
+    position: relative;
+    width: min(60.5%, 181px);
+    aspect-ratio: 1;
+    border: 1.5px solid currentColor;
+    border-radius: 50%;
+    opacity: .55;
+    transition: opacity .2s;
+  }
+  .add-tile:hover .add-ring { opacity: 1; }
+
+  /* Le + est tracé en CSS plutôt qu'en glyphe : son épaisseur reste celle
+     du cercle quelle que soit la graisse de la police. */
+  .add-ring::before,
+  .add-ring::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    background: currentColor;
+    border-radius: 1px;
+  }
+  .add-ring::before { width: 36%; height: 2px; transform: translate(-50%, -50%); }
+  .add-ring::after  { width: 2px; height: 36%; transform: translate(-50%, -50%); }
+
+  /* Sous 760px la bande verticale mangerait la largeur utile :
+     le titre reprend une orientation normale au-dessus des cartes */
+  @media (max-width: 760px) {
+    .page { grid-template-columns: 1fr; gap: 4px; }
+    /* une colonne quel que soit le réglage : 5 colonnes sur 400px
+       de large ne donnerait que des cartes illisibles */
+    .grid, .grid[data-cols] { grid-template-columns: 1fr; }
+    .page-title {
+      writing-mode: horizontal-tb;
+      transform: none;
+      position: static;
+      font-size: 42px;
+      margin: 0 0 4px;   /* l'alignement sur les cartes n'a plus d'objet */
+    }
+  }
+
+  /* ---------- Signature ---------- */
+  .credit {
+    position: fixed;
+    right: 18px;
+    bottom: 14px;
+    z-index: 15;
+    font-size: 11.5px;
+    color: var(--ink-dim);
+    background: var(--panel);
+    border: 1px solid var(--panel-edge);
+    border-radius: 999px;
+    padding: 5px 12px;
+    box-shadow: 0 1px 4px rgba(var(--shadow),.06);
+    opacity: .7;
+    transition: opacity .15s, color .15s;
+    user-select: none;
+    text-decoration: none;
+    cursor: pointer;
+  }
+  .credit:hover { opacity: 1; color: var(--ink); }
+  .credit:focus-visible {
+    opacity: 1;
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+  .credit-heart { color: var(--red-soft); }
+
+  /* inline-block plutôt qu'un flex sur .credit : les morceaux de phrase
+     deviendraient des items séparés et gagneraient un gap parasite */
+  .credit-logo {
+    display: inline-block;
+    width: 14px;
+    height: 14px;
+    margin-right: 6px;
+    vertical-align: -3px;
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+  }
+
+  /* équivalent textuel du cœur, hors écran mais lu par les lecteurs */
+  .credit-alt {
+    position: absolute;
+    width: 1px; height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .card-inner, .ring-prog { transition: none; }
+    .filters-panel.open { animation: none; }
+    .add-todo, .del-confirm { transition: none; }
+  }

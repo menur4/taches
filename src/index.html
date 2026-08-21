@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>tâches</title>
+<!--__FAVICON__-->
+<style>
+/*__FONTS__*/
+/*__LOGO__*/
+</style>
+<style>
+/*__CSS__*/
+</style>
+</head>
+<body>
+
+<div class="page">
+
+<h1 class="page-title">tâches</h1>
+
+<main class="page-main">
+
+<header>
+  <!-- Les chips occupent la ligne libre du header : les déplier ne pousse
+       donc plus la grille vers le bas. inert quand fermé, sinon les chips
+       masquées restent tabulables. -->
+  <div class="filters-panel" id="filtersPanel" inert>
+    <div class="filters" id="filters"></div>
+  </div>
+
+  <button class="filters-toggle" id="filtersToggle" aria-expanded="false" aria-controls="filtersPanel"
+          aria-label="Filtrer les cartes" title="Filtrer les cartes" hidden>
+    <svg width="30" height="30" viewBox="0 0 16 16" aria-hidden="true">
+      <path d="M2.5 3.5 H13.5 L9.3 8.7 V13.3 L6.7 11.9 V8.7 Z" fill="none" stroke="currentColor"
+            stroke-width="1" stroke-linejoin="round"/>
+    </svg>
+    <span class="ft-count" id="filtersCount" hidden></span>
+  </button>
+
+  <!-- Réglages d'affichage : ancrés dans un conteneur relatif pour que
+       la popup s'ouvre sous la roue, alignée sur son bord droit -->
+  <div class="cfg-anchor">
+    <button class="cfg-toggle" id="cfgToggle" aria-expanded="false" aria-controls="cfgPanel"
+            aria-haspopup="dialog" aria-label="Réglages d'affichage" title="Réglages d'affichage">
+      <svg width="26" height="26" viewBox="0 0 24 24" aria-hidden="true" fill="none"
+           stroke="currentColor" stroke-width="1.25" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="3.3"/>
+        <path d="M9.42 5.60 L9.33 2.05 L14.67 2.05 L14.58 5.60 A 6.9 6.9 0 0 1 16.25 6.56 L16.25 6.56 L19.28 4.72 L21.95 9.33 L18.83 11.04 A 6.9 6.9 0 0 1 18.83 12.96 L18.83 12.96 L21.95 14.67 L19.28 19.28 L16.25 17.44 A 6.9 6.9 0 0 1 14.58 18.40 L14.58 18.40 L14.67 21.95 L9.33 21.95 L9.42 18.40 A 6.9 6.9 0 0 1 7.75 17.44 L7.75 17.44 L4.72 19.28 L2.05 14.67 L5.17 12.96 A 6.9 6.9 0 0 1 5.17 11.04 L5.17 11.04 L2.05 9.33 L4.72 4.72 L7.75 6.56 A 6.9 6.9 0 0 1 9.42 5.60 Z"/>
+      </svg>
+    </button>
+
+    <div class="cfg-popover" id="cfgPanel" role="dialog" aria-label="Réglages d'affichage" hidden>
+      <div class="cfg-label" id="cfgColsLabel">Colonnes</div>
+      <div class="cfg-choices" role="radiogroup" aria-labelledby="cfgColsLabel">
+        <button class="cfg-choice" data-cols="auto" role="radio" aria-checked="true">Auto</button>
+        <button class="cfg-choice" data-cols="2" role="radio" aria-checked="false">2</button>
+        <button class="cfg-choice" data-cols="3" role="radio" aria-checked="false">3</button>
+        <button class="cfg-choice" data-cols="4" role="radio" aria-checked="false">4</button>
+        <button class="cfg-choice" data-cols="5" role="radio" aria-checked="false">5</button>
+      </div>
+
+      <div class="cfg-label cfg-label-next" id="cfgThemeLabel">Thème</div>
+      <div class="cfg-choices" role="radiogroup" aria-labelledby="cfgThemeLabel">
+        <button class="cfg-choice" data-theme="light" role="radio" aria-checked="false">Clair</button>
+        <button class="cfg-choice" data-theme="dark" role="radio" aria-checked="false">Sombre</button>
+        <button class="cfg-choice" data-theme="system" role="radio" aria-checked="true">Système</button>
+      </div>
+
+      <!-- Version et commit sont figés par build.sh au moment de la
+           construction : la page publiée dit donc de quel état du dépôt
+           elle provient, sans rien avoir à interroger à l'exécution. -->
+      <div class="cfg-meta">
+        <div class="cfg-version">v__VERSION__</div>
+        <div class="cfg-commit" title="Commit de construction">__COMMIT__</div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<div class="grid" id="grid"></div>
+
+</main>
+</div>
+
+<datalist id="tagSuggestions"></datalist>
+
+<!-- Le cœur est décoratif : masqué aux lecteurs d'écran, doublé d'un
+     équivalent textuel pour que la phrase reste lisible à l'oreille -->
+<footer>
+  <a class="credit" href="https://www.menur4.fr" target="_blank" rel="noopener noreferrer"
+     ><span class="credit-logo" aria-hidden="true"></span>Made with <span class="credit-heart" aria-hidden="true">♥</span><span class="credit-alt">love</span> by menuR4</a>
+</footer>
+
+<script>
+//__JS__
+</script>
+</body>
+</html>

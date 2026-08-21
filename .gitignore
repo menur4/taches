@@ -1,0 +1,7 @@
+# Sortie de build : régénérée par ./build.sh.
+# Volontairement non versionnée — le hash du commit y est injecté au
+# build, un dist/ commité porterait donc toujours le hash du commit
+# précédent et n'aurait jamais raison.
+dist/
+
+.DS_Store
