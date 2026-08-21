@@ -874,19 +874,20 @@
   }
 
   /* L'arabe est cursif : ses lettres se lient et writing-mode les
-     pivoterait une à une, ce qui disloque le mot. Le titre repasse donc à
-     l'horizontale — la bande verticale reste réservée aux langues latines. */
-  :root[lang="ar"] .page {
-    grid-template-columns: minmax(0, 1fr);
-    gap: 2px;
-  }
+     pivoterait une à une, ce qui disloque le mot. Le titre reste donc
+     horizontal — mais dans sa colonne latérale, que la grille place d'elle-
+     même à droite en lecture inversée. Passer la page à une seule colonne
+     rendait au contraire toute la largeur à la grille, qui en tirait alors
+     quatre ou cinq colonnes de cartes. */
   :root[lang="ar"] .page-title {
     writing-mode: horizontal-tb;
     transform: none;
-    position: static;
-    font-size: clamp(46px, 7vw, 84px);
-    margin: 0 0 6px;
+    /* le mot fait environ 1,8 fois la font-size en largeur : à 125px il
+       occupe la même colonne que le titre latin, qui en réclame ~226 */
+    font-size: clamp(52px, 8.7vw, 128px);
     line-height: 1.15;
+    text-align: center;
+    margin-top: 50px;
   }
 
   /* Sous 760px la bande verticale mangerait la largeur utile :
