@@ -427,7 +427,7 @@ function renderGrid() {
       <div class="card-inner">
         <div class="face front">
           <div class="tile-head">
-            <input class="tile-title" value="${escapeHtml(t.title)}" aria-label="${tr('titreEpique')}" style="flex:1; min-width:0">
+            <input class="tile-title" value="${escapeHtml(t.title)}" aria-label="${tr('titreCarte')}" style="flex:1; min-width:0">
             <span class="tag-dots">${dotsHTML}</span>
           </div>
           <div class="ring-wrap${hasChildren(t) ? ' derived' : ''}">
@@ -460,7 +460,7 @@ function renderGrid() {
           </div>` : ''}
           <ul class="todo-list">${todosHTML}</ul>
           <div class="todo-add">
-            <button class="icon-btn del del-tile" title="${tr('supprimerEpique')}" aria-label="${tr('supprimerEpique')}">
+            <button class="icon-btn del del-tile" title="${tr('supprimerCarte')}" aria-label="${tr('supprimerCarte')}">
               <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor"
                    stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                 <path d="M2.7 4.3h10.6"/><path d="M6.4 4.3V3h3.2v1.3"/>
@@ -491,11 +491,11 @@ function renderGrid() {
 
   const add = document.createElement('button');
   add.className = 'add-tile';
-  add.setAttribute('aria-label', tr('nouvelleEpique'));
-  add.title = tr('nouvelleEpique');
+  add.setAttribute('aria-label', tr('nouvelleCarte'));
+  add.title = tr('nouvelleCarte');
   add.innerHTML = '<span class="add-ring" aria-hidden="true"></span>';
   add.onclick = () => {
-    const newTile = { id: 't' + Date.now(), title: tr('nouvelleEpique'), tags: [...activeFilters], pct: 0, todos: [] };
+    const newTile = { id: 't' + Date.now(), title: tr('nouvelleCarte'), tags: [...activeFilters], pct: 0, todos: [] };
     tiles.push(newTile);
     saveTiles();
     render();
@@ -827,7 +827,7 @@ function bindEvents() {
     });
   });
 
-  // Suppression d'épique en deux temps : la poubelle arme la confirmation,
+  // Suppression d'une carte en deux temps : la poubelle arme la confirmation,
   // le bouton rouge la valide. Une seule carte peut être armée à la fois.
   grid.querySelectorAll('.del-tile').forEach(btn => {
     btn.addEventListener('click', e => {
