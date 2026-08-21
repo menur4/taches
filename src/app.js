@@ -104,6 +104,8 @@ function applyLang() {
   document.title = tr('titre');
   document.getElementById('pageTitle').textContent = tr('titre');
 
+  dimensionneTitre();
+
   document.querySelectorAll('[data-i18n]').forEach(el => {
     el.textContent = tr(el.dataset.i18n);
   });
@@ -116,6 +118,28 @@ function applyLang() {
   document.querySelectorAll('.cfg-lang').forEach(b => {
     b.setAttribute('aria-checked', String(b.dataset.lang === prefs.lang));
   });
+}
+
+/* Le titre arabe est un bloc pivoté : la rotation ne change pas sa boîte
+   de mise en page, qui resterait large et plate. On lui rend les
+   dimensions du rendu — offsetWidth/offsetHeight ignorant les transforms,
+   ils donnent bien la ligne composée horizontalement. Les autres langues
+   passent par writing-mode, qui dimensionne tout seul. */
+function dimensionneTitre() {
+  const h1 = document.querySelector('.page-title');
+  const mot = document.getElementById('pageTitle');
+  if ((I18N[prefs.lang] || I18N.fr).dir !== 'rtl') {
+    h1.style.removeProperty('width');
+    h1.style.removeProperty('height');
+    return;
+  }
+  const poser = () => {
+    h1.style.width = mot.offsetHeight + 'px';
+    h1.style.height = mot.offsetWidth + 'px';
+  };
+  poser();
+  // une mesure prise avant l'arrivée des fontes serait fausse
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(poser);
 }
 
 // « Système » n'est pas un thème : c'est une délégation au réglage de l'OS
@@ -1022,6 +1046,10 @@ document.querySelectorAll('.cfg-lang').forEach(btn => {
     applyLang();
     render();          // les libellés vivant dans les cartes
     savePrefs();
+    // toute la page vient de changer, jusqu'au sens de lecture : garder la
+    // popup ouverte par-dessus donnerait l'impression d'un rechargement
+    // laissé à mi-chemin. Le thème et la densité, eux, se règlent à vue.
+    setCfgOpen(false);
   });
 });
 

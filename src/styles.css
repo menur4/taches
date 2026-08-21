@@ -873,21 +873,28 @@
     font-family: 'Larken', 'Noto Naskh Arabic', 'Geeza Pro', 'Segoe UI', Tahoma, serif;
   }
 
-  /* L'arabe est cursif : ses lettres se lient et writing-mode les
-     pivoterait une à une, ce qui disloque le mot. Le titre reste donc
-     horizontal — mais dans sa colonne latérale, que la grille place d'elle-
-     même à droite en lecture inversée. Passer la page à une seule colonne
-     rendait au contraire toute la largeur à la grille, qui en tirait alors
-     quatre ou cinq colonnes de cartes. */
+  /* L'arabe est cursif : writing-mode empilerait ses lettres une à une et
+     disloquerait le mot. On compose donc la ligne normalement, puis on
+     bascule le bloc entier — la liaison des lettres est préservée, et le
+     titre reste vertical comme dans les autres langues.
+     Contrepartie : une rotation ne modifie pas la boîte de mise en page.
+     C'est applyLang() qui lui donne les dimensions du rendu, mesurées
+     une fois les fontes chargées. */
   :root[lang="ar"] .page-title {
     writing-mode: horizontal-tb;
     transform: none;
-    /* le mot fait environ 1,8 fois la font-size en largeur : à 125px il
-       occupe la même colonne que le titre latin, qui en réclame ~226 */
-    font-size: clamp(52px, 8.7vw, 128px);
-    line-height: 1.15;
-    text-align: center;
+    position: sticky;
+    font-size: clamp(80px, 22vh, 200px);
+    line-height: 1.2;
     margin-top: 50px;
+  }
+  :root[lang="ar"] .page-title > span {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) rotate(-90deg);
+    transform-origin: center;
+    white-space: nowrap;
   }
 
   /* Sous 760px la bande verticale mangerait la largeur utile :
